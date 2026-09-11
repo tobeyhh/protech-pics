@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProTech Internal Correspondence System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --bg: #0B0E11;
+    --panel: #12161B;
+    --panel-raised: #161B21;
+    --border: #232A31;
+    --border-soft: #1B2127;
+    --text: #E4E7EB;
+    --muted: #8B95A1;
+    --faint: #545E68;
+    --gold: #B08D57;
+    --gold-soft: #D9BD8C;
+    --steel: #4A7A96;
+    --danger: #B4432F;
+    --ok: #5C8A6A;
+    --radius: 2px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(176,141,87,0.06), transparent),
+      radial-gradient(1200px 700px at 100% 0%, rgba(74,122,150,0.07), transparent),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:rgba(176,141,87,0.35); }
+  :focus-visible{ outline:1.5px solid var(--gold-soft); outline-offset:2px; }
+
+  /* ---------- Header ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px clamp(18px,4vw,48px);
+    border-bottom:1px solid var(--border-soft);
+  }
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .brand-mark{
+    width:34px; height:34px; border:1px solid var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk'; font-weight:700; font-size:14px; color:var(--gold);
+    position:relative;
+  }
+  .brand-mark::before, .brand-mark::after{
+    content:""; position:absolute; width:5px; height:5px; border:1px solid var(--gold-soft);
+  }
+  .brand-mark::before{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
+  .brand-mark::after{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
+  .brand-text h1{
+    font-family:'Space Grotesk'; font-weight:600; font-size:17px; margin:0; letter-spacing:0.01em;
+  }
+  .brand-text p{
+    margin:2px 0 0; font-size:12px; color:var(--muted); font-family:'IBM Plex Mono';
+  }
+  .sysclock{
+    font-family:'IBM Plex Mono'; font-size:12px; color:var(--faint); text-align:right; line-height:1.6;
+  }
+  .sysclock b{ color:var(--muted); font-weight:500; }
+
+  /* ---------- Layout ---------- */
+  .workspace{
+    display:grid; grid-template-columns: 1fr 1fr;
+    gap:1px; background:var(--border-soft);
+    border-top:1px solid var(--border-soft); border-bottom:1px solid var(--border-soft);
+  }
+  @media (max-width: 900px){ .workspace{ grid-template-columns:1fr; } }
+  .pane{ background:var(--bg); padding:clamp(18px,3vw,36px); }
+  .pane-title{
+    font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:0.12em; color:var(--faint);
+    margin:0 0 18px; display:flex; align-items:center; gap:8px;
+  }
+  .pane-title::after{ content:""; flex:1; height:1px; background:var(--border); }
+
+  /* ---------- Form ---------- */
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block; font-size:11px; color:var(--muted); margin-bottom:6px;
+    font-family:'IBM Plex Mono'; letter-spacing:0.03em;
+  }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  select, input[type=text], textarea{
+    width:100%; background:var(--panel); border:1px solid var(--border);
+    color:var(--text); padding:10px 12px; font-family:'Inter'; font-size:14px;
+    border-radius:var(--radius);
+  }
+  select{ font-family:'Inter'; cursor:pointer; }
+  textarea{ font-family:'Inter'; resize:vertical; min-height:180px; line-height:1.55; }
+  select:focus, input:focus, textarea:focus{ border-color:var(--gold); }
+  .hint{ font-size:11.5px; color:var(--faint); margin-top:6px; }
+
+  .sender-preview{
+    border:1px solid var(--border); background:var(--panel);
+    padding:10px 12px; margin-top:8px; font-family:'IBM Plex Mono'; font-size:12px;
+    color:var(--muted); display:none;
+  }
+  .sender-preview.show{ display:block; }
+  .sender-preview b{ color:var(--gold-soft); font-weight:500; }
+
+  .class-options{ display:flex; gap:8px; flex-wrap:wrap; }
+  .class-chip{
+    font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:0.06em;
+    padding:7px 12px; border:1px solid var(--border); color:var(--muted);
+    cursor:pointer; background:var(--panel); border-radius:var(--radius);
+  }
+  .class-chip.active[data-c="ROUTINE"]{ border-color:var(--steel); color:var(--steel); background:rgba(74,122,150,0.08); }
+  .class-chip.active[data-c="INTERNAL"]{ border-color:var(--muted); color:var(--text); }
+  .class-chip.active[data-c="CONFIDENTIAL"]{ border-color:var(--gold); color:var(--gold-soft); background:rgba(176,141,87,0.08); }
+  .class-chip.active[data-c="URGENT"]{ border-color:var(--danger); color:#D97F6C; background:rgba(180,67,47,0.1); }
+
+  /* ---------- Roster manager ---------- */
+  .roster-toggle{
+    margin-top:26px; padding-top:18px; border-top:1px solid var(--border-soft);
+  }
+  .roster-toggle summary{
+    cursor:pointer; font-family:'IBM Plex Mono'; font-size:11px; color:var(--muted);
+    letter-spacing:0.06em; list-style:none; display:flex; align-items:center; gap:8px;
+  }
+  .roster-toggle summary::-webkit-details-marker{ display:none; }
+  .roster-toggle summary::before{ content:"+"; color:var(--gold); font-size:13px; }
+  .roster-toggle[open] summary::before{ content:"–"; }
+  .roster-list{ margin:16px 0; display:flex; flex-direction:column; gap:8px; }
+  .roster-item{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 12px; background:var(--panel); border:1px solid var(--border-soft);
+    font-size:12.5px;
+  }
+  .roster-item .who{ font-family:'IBM Plex Mono'; color:var(--muted); }
+  .roster-item .who b{ color:var(--text); font-family:'Inter'; font-weight:500; }
+  .roster-item button{
+    background:none; border:none; color:var(--faint); cursor:pointer; font-size:12px;
+    font-family:'IBM Plex Mono';
+  }
+  .roster-item button:hover{ color:var(--danger); }
+  .add-staff{
+    display:grid; grid-template-columns: 1.3fr 1fr 1fr 0.8fr auto; gap:8px; margin-top:10px;
+  }
+  @media (max-width: 700px){ .add-staff{ grid-template-columns:1fr 1fr; } }
+  .add-staff input, .add-staff select{ padding:8px 10px; font-size:12.5px; }
+  .add-staff button{
+    background:var(--gold); color:#15110A; border:none; font-family:'IBM Plex Mono';
+    font-size:12px; letter-spacing:0.04em; cursor:pointer; padding:8px 10px; border-radius:var(--radius);
+    font-weight:600;
+  }
+  .add-staff button:hover{ background:var(--gold-soft); }
+
+  /* ---------- BBCode toolbar ---------- */
+  .bb-toolbar{
+    display:flex; gap:4px; margin-bottom:8px; flex-wrap:wrap;
+  }
+  .bb-btn{
+    font-family:'IBM Plex Mono'; font-size:12px; min-width:30px; height:30px;
+    background:var(--panel); border:1px solid var(--border); color:var(--muted);
+    cursor:pointer; border-radius:var(--radius); padding:0 8px;
+  }
+  .bb-btn:hover{ border-color:var(--gold); color:var(--gold-soft); }
+  .bb-btn b, .bb-btn i, .bb-btn u{ font-family:'Inter'; }
+  .bb-btn.swatch{ color:var(--gold); font-weight:700; }
+  .bb-sep{ width:1px; background:var(--border); margin:2px 4px; }
+  .bb-color-group{ display:flex; align-items:center; gap:5px; padding:0 2px; }
+  .bb-swatch{
+    width:19px; height:19px; border-radius:50%; border:1px solid var(--border);
+    cursor:pointer; padding:0; flex-shrink:0;
+  }
+  .bb-swatch:hover{ border-color:var(--gold-soft); }
+  .bb-color-input{
+    width:22px; height:22px; padding:0; border:1px solid var(--border); background:none;
+    cursor:pointer; border-radius:var(--radius); flex-shrink:0;
+  }
+  .bb-size-group{ display:flex; align-items:center; gap:4px; }
+  .bb-size-select{
+    height:30px; background:var(--panel); border:1px solid var(--border); color:var(--muted);
+    font-family:'IBM Plex Mono'; font-size:11px; border-radius:var(--radius); padding:0 6px; cursor:pointer;
+  }
+
+  /* ---------- Preview pane ---------- */
+  .letterhead{
+    position:relative; border:1px solid var(--border);
+    background:linear-gradient(180deg, var(--panel-raised), var(--panel));
+    padding:26px 26px 22px;
+  }
+  .corner{ position:absolute; width:10px; height:10px; border:1px solid var(--gold); opacity:0.6; }
+  .corner.tl{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
+  .corner.tr{ top:-1px; right:-1px; border-left:none; border-bottom:none; }
+  .corner.bl{ bottom:-1px; left:-1px; border-right:none; border-top:none; }
+  .corner.br{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
+
+  .lh-head{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid var(--border);
+  }
+  .lh-brand{ font-family:'Space Grotesk'; font-weight:600; font-size:14px; letter-spacing:0.01em; }
+  .lh-brand span{ display:block; font-family:'IBM Plex Mono'; font-weight:400; font-size:10.5px; color:var(--faint); margin-top:3px; letter-spacing:0.08em; }
+  .stamp{
+    font-family:'IBM Plex Mono'; font-size:10.5px; letter-spacing:0.1em; padding:5px 10px;
+    border:1px solid var(--muted); color:var(--muted);
+  }
+  .stamp.ROUTINE{ border-color:var(--steel); color:var(--steel); }
+  .stamp.CONFIDENTIAL{ border-color:var(--gold); color:var(--gold-soft); }
+  .stamp.URGENT{ border-color:var(--danger); color:#D97F6C; }
+
+  .meta{ font-family:'IBM Plex Mono'; font-size:12px; line-height:2; margin-bottom:16px; }
+  .meta-row{ display:flex; gap:10px; }
+  .meta-row .k{ color:var(--faint); width:96px; flex-shrink:0; }
+  .meta-row .v{ color:var(--text); }
+  .meta-row .v.empty{ color:var(--faint); font-style:normal; }
+
+  .lh-subject{
+    font-family:'Space Grotesk'; font-size:15.5px; font-weight:500; margin:0 0 16px;
+    padding-bottom:14px; border-bottom:1px solid var(--border);
+  }
+  .lh-body{
+    font-size:14px; line-height:1.7; white-space:pre-wrap; min-height:120px; color:#D7DAE0;
+    margin-bottom:20px;
+  }
+  .lh-body.empty{ color:var(--faint); }
+  .lh-body .bb-quote{
+    margin:10px 0; padding:8px 12px; border-left:2px solid var(--gold);
+    background:rgba(176,141,87,0.06); color:var(--muted); font-size:13.5px;
+  }
+  .lh-body .bb-hr{ border:none; border-top:1px dashed var(--border); margin:12px 0; }
+  .lh-body .bb-heading{ font-family:'Space Grotesk'; font-weight:600; display:block; margin:6px 0; color:var(--text); }
+  .lh-body ul.bb-list, .lh-body ol.bb-list{ margin:8px 0 14px; padding-left:22px; }
+  .lh-body ul.bb-list li, .lh-body ol.bb-list li{ margin-bottom:5px; }
+  .lh-body table.bb-table{ width:100%; border-collapse:collapse; margin:12px 0 16px; font-size:13px; }
+  .lh-body table.bb-table td{ border:1px solid var(--border); padding:7px 10px; }
+  .lh-body table.bb-table tr:first-child td{
+    font-family:'IBM Plex Mono'; color:var(--gold-soft); font-weight:600;
+    background:rgba(176,141,87,0.07); font-size:11.5px; letter-spacing:0.02em;
+  }
+  .lh-body .bb-spoiler{ margin:10px 0; border:1px solid var(--border); background:var(--panel); padding:9px 12px; }
+  .lh-body .bb-spoiler summary{ cursor:pointer; font-family:'IBM Plex Mono'; font-size:11px; color:var(--gold-soft); letter-spacing:0.06em; }
+  .lh-body .bb-spoiler div{ margin-top:9px; font-size:13.5px; color:var(--muted); }
+  .lh-body .bb-img{ max-width:100%; display:block; margin:10px 0; border:1px solid var(--border); }
+
+  .sig{
+    border-top:1px dashed var(--border); padding-top:14px; font-family:'IBM Plex Mono'; font-size:12px;
+  }
+  .sig .name{ font-family:'Inter'; font-size:14px; font-weight:600; color:var(--text); margin-bottom:3px; }
+  .sig .role{ color:var(--gold-soft); }
+  .sig .div{ color:var(--muted); }
+  .sig .org{ color:var(--faint); margin-top:6px; }
+
+  .actions{ display:flex; gap:10px; margin-top:16px; }
+  .btn{
+    font-family:'IBM Plex Mono'; font-size:12px; letter-spacing:0.05em; padding:11px 18px;
+    border:1px solid var(--border); background:var(--panel); color:var(--text); cursor:pointer;
+    border-radius:var(--radius); flex:1;
+  }
+  .btn.primary{ background:var(--gold); color:#15110A; border-color:var(--gold); font-weight:600; }
+  .btn.primary:hover{ background:var(--gold-soft); }
+  .btn:hover{ border-color:var(--muted); }
+  .btn.copied{ background:var(--ok); border-color:var(--ok); color:#0E1512; }
+
+  .storage-note{ font-size:11px; color:var(--faint); margin-top:10px; text-align:center; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">P</div>
+    <div class="brand-text">
+      <h1>ProTech Security Solutions</h1>
+      <p>Internal Correspondence System</p>
+    </div>
+  </div>
+  <div class="sysclock" id="sysclock"></div>
+</div>
+
+<div class="workspace">
+
+  <!-- COMPOSE -->
+  <div class="pane">
+    <p class="pane-title">COMPOSE</p>
+
+    <div class="field">
+      <label for="sender">From</label>
+      <select id="sender"></select>
+      <div class="sender-preview" id="senderPreview"></div>
+    </div>
+
+    <div class="field">
+      <label>Classification</label>
+      <div class="class-options" id="classOptions">
+        <div class="class-chip" data-c="ROUTINE">ROUTINE</div>
+        <div class="class-chip" data-c="INTERNAL">INTERNAL</div>
+        <div class="class-chip" data-c="CONFIDENTIAL">CONFIDENTIAL</div>
+        <div class="class-chip" data-c="URGENT">URGENT</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="subject">Subject</label>
+      <input type="text" id="subject" placeholder="Subject line">
+    </div>
+
+    <div class="field">
+      <label for="body">Message</label>
+      <div class="bb-toolbar" id="bbToolbar">
+        <button type="button" class="bb-btn" data-bb="b" title="Bold"><b>B</b></button>
+        <button type="button" class="bb-btn" data-bb="i" title="Italic"><i>I</i></button>
+        <button type="button" class="bb-btn" data-bb="u" title="Underline"><u>U</u></button>
+        <span class="bb-sep"></span>
+        <span class="bb-color-group" id="colorGroup" title="Text color">
+          <button type="button" class="bb-swatch" data-color="#B08D57" style="background:#B08D57" title="Gold"></button>
+          <button type="button" class="bb-swatch" data-color="#4A7A96" style="background:#4A7A96" title="Steel"></button>
+          <button type="button" class="bb-swatch" data-color="#B4432F" style="background:#B4432F" title="Danger"></button>
+          <button type="button" class="bb-swatch" data-color="#5C8A6A" style="background:#5C8A6A" title="Green"></button>
+          <button type="button" class="bb-swatch" data-color="#E4E7EB" style="background:#E4E7EB" title="White"></button>
+          <input type="color" id="customColor" class="bb-color-input" value="#B08D57" title="Custom color">
+        </span>
+        <span class="bb-sep"></span>
+        <button type="button" class="bb-btn" data-bb="quote" title="Quote">"</button>
+        <button type="button" class="bb-btn" data-bb="center" title="Center">↔</button>
+        <span class="bb-sep"></span>
+        <button type="button" class="bb-btn" data-bb="h1" title="Heading 1">H1</button>
+        <button type="button" class="bb-btn" data-bb="h2" title="Heading 2">H2</button>
+        <span class="bb-size-group" title="Text size">
+          <select id="sizeSelect" class="bb-size-select">
+            <option value="70">Small</option>
+            <option value="100" selected>Normal</option>
+            <option value="130">Large</option>
+            <option value="150">Larger</option>
+            <option value="200">Huge</option>
+          </select>
+          <button type="button" class="bb-btn" id="applySizeBtn" title="Apply size to selection">Size</button>
+        </span>
+        <span class="bb-sep"></span>
+        <button type="button" class="bb-btn" data-bb="list" title="Bullet list">•</button>
+        <button type="button" class="bb-btn" data-bb="list1" title="Numbered list">1.</button>
+        <button type="button" class="bb-btn" data-bb="table" title="Table">⊞</button>
+        <button type="button" class="bb-btn" data-bb="spoiler" title="Spoiler">◐</button>
+        <button type="button" class="bb-btn" data-bb="img" title="Image">🖼</button>
+        <span class="bb-sep"></span>
+        <button type="button" class="bb-btn" data-bb="hr" title="Divider">—</button>
+      </div>
+      <textarea id="body" placeholder="Write the message body here..."></textarea>
+      <p class="hint">Select text, then pick a color or size to apply it — works for emails, notices, and handbook sections alike.</p>
+    </div>
+
+    <details class="roster-toggle" id="rosterToggle">
+      <summary>Manage staff roster</summary>
+      <div class="roster-list" id="rosterList"></div>
+      <div class="add-staff">
+        <input type="text" id="newName" placeholder="Full name">
+        <select id="newDivision"></select>
+        <select id="newLevel"></select>
+        <input type="text" id="newBadge" placeholder="Badge #">
+        <button id="addStaffBtn">Add</button>
+      </div>
+      <p class="hint">Role code is generated automatically from division and level (e.g. TSD-06). Added staff are saved for next time.</p>
+    </details>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="pane">
+    <p class="pane-title">PREVIEW</p>
+
+    <div class="letterhead">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+
+      <div class="lh-head">
+        <div class="lh-brand">PROTECH SECURITY SOLUTIONS<span>INTERNAL CORRESPONDENCE — LOS SANTOS</span></div>
+        <div class="stamp ROUTINE" id="stampEl">ROUTINE</div>
+      </div>
+
+      <p class="lh-subject" id="mSubject">Subject line appears here</p>
+      <div class="lh-body empty" id="mBody">Message body will appear here as you type.</div>
+
+      <div class="sig" id="mSig"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="copyBBBtn">Copy BBCode</button>
+      <button class="btn" id="copyBtn">Copy plain text</button>
+      <button class="btn" id="saveImgBtn">Save as image</button>
+    </div>
+    <p class="storage-note" id="storageNote"></p>
+  </div>
+
+</div>
+
+<script>
+(function(){
+
+  const DIVISIONS = {
+    EXE: { name: "Executive Division", levels: ["Assistant Director","Director of Operations","Chief Operating Officer","Chief Executive Officer"] },
+    TSD: { name: "Technical Services Division", levels: ["Junior Technician","Technician","Senior Technician","Supervisor Technician","Assistant Director","Technical Services Director"] },
+    PPD: { name: "Personal Protection Division", levels: ["Protection Officer I","Protection Officer II","Senior Protection Officer","Lead Protection Officer","Division Supervisor","Personal Protection Director"] },
+    RTD: { name: "Training & Recruitment Division", levels: ["Field Training Officer","Recruitment Officer"," Assistant Training & Recruitment Director","Training & Recruitment Director"] },
+    OPS: { name: "Field Operations", levels: ["Security Officer","Senior Security Officer","Shift Supervisor","Operations Coordinator","Director of Field Operations"] }
+  };
+
+  const DEFAULT_ROSTER = [
+    { id: "r1", name: "Mara Locke", div: "TSD", levelIndex: 5, badge: "598" },
+    { id: "r2", name: "Dominic Gallagher", div: "OPS", levelIndex: 0, badge: "103" }
+  ];
+
+  let roster = [];
+  let classification = "ROUTINE";
+  let storageOK = true;
+
+  const el = id => document.getElementById(id);
+
+  function roleCode(div, levelIndex){
+    return div + "-0" + (levelIndex + 1);
+  }
+
+  function pad(n){ return n < 10 ? "0"+n : n; }
+
+  function todayString(){
+    const d = new Date();
+    const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+    return pad(d.getDate()) + " " + months[d.getMonth()] + " " + d.getFullYear();
+  }
+
+  function genRef(divCode){
+    const d = new Date();
+    const stamp = d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate());
+    const rand = Math.floor(1000 + Math.random()*9000);
+    return "PT-" + (divCode || "GEN") + "-" + stamp + "-" + rand;
+  }
+
+  // ---------- BBCode ----------
+  const BB_TAGS = {
+    b: ["[b]","[/b]"],
+    i: ["[i]","[/i]"],
+    u: ["[u]","[/u]"],
+    color: ["[color=#B08D57]","[/color]"],
+    quote: ["[quote]","[/quote]"],
+    center: ["[center]","[/center]"],
+    h1: ["[size=150][b]","[/b][/size]"],
+    h2: ["[size=120][b]","[/b][/size]"],
+    spoiler: ["[spoiler]","[/spoiler]"]
+  };
+
+  function wrapCustom(open, close){
+    const ta = el('body');
+    const start = ta.selectionStart, end = ta.selectionEnd;
+    const val = ta.value;
+    const selected = val.substring(start, end);
+    const insert = open + selected + close;
+    ta.value = val.substring(0, start) + insert + val.substring(end);
+    const pos = selected ? start + insert.length : start + open.length;
+    ta.focus();
+    ta.setSelectionRange(pos, pos);
+    updatePreview();
+  }
+
+  function wrapBBTag(key){
+    const [open, close] = BB_TAGS[key];
+    wrapCustom(open, close);
+  }
+
+  function wrapColor(hex){
+    wrapCustom("[color=" + hex + "]", "[/color]");
+  }
+
+  function wrapSize(pct){
+    wrapCustom("[size=" + pct + "]", "[/size]");
+  }
+
+  function smartInsert(text){
+    const ta = el('body');
+    const start = ta.selectionStart, end = ta.selectionEnd;
+    const val = ta.value;
+    const needsNL = start > 0 && val[start-1] !== "\n";
+    const full = (needsNL ? "\n" : "") + text;
+    ta.value = val.substring(0, start) + full + val.substring(end);
+    const pos = start + full.length;
+    ta.focus();
+    ta.setSelectionRange(pos, pos);
+    updatePreview();
+  }
+
+  function insertBBHr(){
+    smartInsert("[hr]\n");
+  }
+
+  function insertBBList(ordered){
+    const open = ordered ? "[list=1]" : "[list]";
+    smartInsert(open + "\n[*]Item one\n[*]Item two\n[*]Item three\n[/list]\n");
+  }
+
+  function insertBBTable(){
+    smartInsert("[table]\n[tr]\n[td]Header 1[/td]\n[td]Header 2[/td]\n[/tr]\n[tr]\n[td]Cell[/td]\n[td]Cell[/td]\n[/tr]\n[/table]\n");
+  }
+
+  function insertBBImage(){
+    const url = window.prompt("Image URL:");
+    if(!url) return;
+    smartInsert("[img]" + url.trim() + "[/img]\n");
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function convertBBLists(s){
+    s = s.replace(/\[list=1\]([\s\S]*?)\[\/list\]/gi, (m, inner)=>{
+      const items = inner.split(/\[\*\]/).map(x=>x.trim()).filter(Boolean);
+      return '<ol class="bb-list">' + items.map(i=>'<li>'+i+'</li>').join('') + '</ol>';
+    });
+    s = s.replace(/\[list\]([\s\S]*?)\[\/list\]/gi, (m, inner)=>{
+      const items = inner.split(/\[\*\]/).map(x=>x.trim()).filter(Boolean);
+      return '<ul class="bb-list">' + items.map(i=>'<li>'+i+'</li>').join('') + '</ul>';
+    });
+    return s;
+  }
+
+  function convertBBTables(s){
+    return s.replace(/\[table\]([\s\S]*?)\[\/table\]/gi, (m, inner)=>{
+      const rows = inner.match(/\[tr\]([\s\S]*?)\[\/tr\]/gi) || [];
+      let html = '<table class="bb-table">';
+      rows.forEach(rowMatch=>{
+        const rowInner = rowMatch.replace(/\[\/?tr\]/gi, '');
+        const cells = rowInner.match(/\[td\]([\s\S]*?)\[\/td\]/gi) || [];
+        html += '<tr>';
+        cells.forEach(c=>{
+          html += '<td>' + c.replace(/\[\/?td\]/gi, '') + '</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</table>';
+      return html;
+    });
+  }
+
+  function bbcodeToHtml(raw){
+    let s = escapeHtml(raw);
+    s = s.replace(/\[size=(\d+)\]([\s\S]*?)\[\/size\]/gi, '<span class="bb-heading" style="font-size:$1%">$2</span>');
+    s = convertBBLists(s);
+    s = convertBBTables(s);
+    s = s.replace(/\[spoiler\]([\s\S]*?)\[\/spoiler\]/gi, '<details class="bb-spoiler"><summary>Spoiler</summary><div>$1</div></details>');
+    s = s.replace(/\[img\](.*?)\[\/img\]/gi, '<img class="bb-img" src="$1" alt="">');
+    s = s.replace(/\[b\]([\s\S]*?)\[\/b\]/gi, '<strong>$1</strong>');
+    s = s.replace(/\[i\]([\s\S]*?)\[\/i\]/gi, '<em>$1</em>');
+    s = s.replace(/\[u\]([\s\S]*?)\[\/u\]/gi, '<u>$1</u>');
+    s = s.replace(/\[color=(#[0-9a-fA-F]{3,6})\]([\s\S]*?)\[\/color\]/gi, '<span style="color:$1">$2</span>');
+    s = s.replace(/\[quote\]([\s\S]*?)\[\/quote\]/gi, '<div class="bb-quote">$1</div>');
+    s = s.replace(/\[center\]([\s\S]*?)\[\/center\]/gi, '<div style="text-align:center">$1</div>');
+    s = s.replace(/\[hr\]/gi, '<hr class="bb-hr">');
+    s = s.replace(/\n/g, '<br>');
+    return s;
+  }
+
+  // ---------- storage ----------
+  async function loadRoster(){
+    try{
+      const result = await window.storage.get('protech-roster', false);
+      roster = result ? JSON.parse(result.value) : DEFAULT_ROSTER.slice();
+      storageOK = true;
+    }catch(e){
+      roster = DEFAULT_ROSTER.slice();
+      storageOK = false;
+    }
+    el('storageNote').textContent = storageOK ? "" : "Roster changes won't persist between visits in this session.";
+  }
+
+  async function saveRoster(){
+    try{
+      await window.storage.set('protech-roster', JSON.stringify(roster), false);
+    }catch(e){ /* non-fatal */ }
+  }
+
+  // ---------- populate selects ----------
+  function populateDivisionSelect(select){
+    select.innerHTML = "";
+    Object.keys(DIVISIONS).forEach(code=>{
+      const opt = document.createElement('option');
+      opt.value = code;
+      opt.textContent = code + " — " + DIVISIONS[code].name;
+      select.appendChild(opt);
+    });
+  }
+
+  function populateLevelSelect(select, divCode){
+    select.innerHTML = "";
+    DIVISIONS[divCode].levels.forEach((lvl, i)=>{
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = lvl;
+      select.appendChild(opt);
+    });
+  }
+
+  function renderSenderSelect(){
+    const select = el('sender');
+    const prevValue = select.value;
+    select.innerHTML = "";
+    roster.forEach(r=>{
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = r.name;
+      select.appendChild(opt);
+    });
+    if(roster.some(r=>r.id===prevValue)) select.value = prevValue;
+    updateSenderPreview();
+  }
+
+  function renderRosterList(){
+    const list = el('rosterList');
+    list.innerHTML = "";
+    roster.forEach(r=>{
+      const div = document.createElement('div');
+      div.className = 'roster-item';
+      div.innerHTML =
+        '<span class="who"><b>'+r.name+'</b> · '+DIVISIONS[r.div].levels[r.levelIndex]+' · Badge #'+r.badge+' · '+roleCode(r.div,r.levelIndex)+'</span>';
+      const btn = document.createElement('button');
+      btn.textContent = 'Remove';
+      btn.onclick = ()=>{
+        roster = roster.filter(x=>x.id!==r.id);
+        saveRoster(); renderRosterList(); renderSenderSelect(); updatePreview();
+      };
+      div.appendChild(btn);
+      list.appendChild(div);
+    });
+  }
+
+  function currentSender(){
+    return roster.find(r=>r.id === el('sender').value);
+  }
+
+  function updateSenderPreview(){
+    const s = currentSender();
+    const box = el('senderPreview');
+    if(!s){ box.classList.remove('show'); return; }
+    box.classList.add('show');
+    box.innerHTML = '<b>'+roleCode(s.div,s.levelIndex)+'</b> · '+DIVISIONS[s.div].levels[s.levelIndex]+' · '+DIVISIONS[s.div].name+' · Badge #'+s.badge;
+  }
+
+  // ---------- preview ----------
+  function updatePreview(){
+    const s = currentSender();
+    const subject = el('subject').value.trim();
+    const body = el('body').value;
+
+    el('mSubject').textContent = subject || "Subject line appears here";
+
+    const bodyEl = el('mBody');
+    bodyEl.innerHTML = body ? bbcodeToHtml(body) : "Message body will appear here as you type.";
+    bodyEl.classList.toggle('empty', !body);
+
+    el('stampEl').textContent = classification;
+    el('stampEl').className = 'stamp ' + classification;
+
+    const sig = el('mSig');
+    if(s){
+      sig.innerHTML =
+        '<div class="name">'+s.name+'</div>'+
+        '<div class="role">'+DIVISIONS[s.div].levels[s.levelIndex]+' — Badge #'+s.badge+'</div>'+
+        '<div class="div">'+DIVISIONS[s.div].name+' ('+s.div+')</div>'+
+        '<div class="org">ProTech Security Solutions — Los Santos</div>';
+    } else {
+      sig.innerHTML = '<div class="org">Select a sender to generate a signature.</div>';
+    }
+  }
+
+  function buildPlainText(){
+    const s = currentSender();
+    const subject = el('subject').value.trim() || "(no subject)";
+    const body = el('body').value.trim();
+
+    let out = "";
+    out += "PROTECH SECURITY SOLUTIONS — INTERNAL CORRESPONDENCE\n";
+    out += "CLASSIFICATION: " + classification + "\n";
+    out += "----------------------------------------\n\n";
+    out += subject + "\n\n";
+    out += body + "\n\n";
+    if(s){
+      out += "—\n";
+      out += s.name + "\n";
+      out += DIVISIONS[s.div].levels[s.levelIndex] + " — Badge #" + s.badge + "\n";
+      out += DIVISIONS[s.div].name + " (" + s.div + ")\n";
+      out += "ProTech Security Solutions — Los Santos\n";
+    }
+    return out;
+  }
+
+  function buildBBCode(){
+    const s = currentSender();
+    const subject = el('subject').value.trim() || "(no subject)";
+    const body = el('body').value.trim();
+    const classColor = { ROUTINE:"#4A7A96", INTERNAL:"#8B95A1", CONFIDENTIAL:"#B08D57", URGENT:"#B4432F" }[classification];
+
+    let out = "";
+    out += "[center][size=130][b]PROTECH SECURITY SOLUTIONS[/b][/size][/center]\n";
+    out += "[center][color=#545E68]INTERNAL CORRESPONDENCE — LOS SANTOS[/color][/center]\n";
+    out += "[center][color="+classColor+"]"+classification+"[/color][/center]\n";
+    out += "[hr]\n\n";
+    out += "[b]"+subject+"[/b]\n\n";
+    out += body + "\n\n";
+    out += "[hr]\n";
+    if(s){
+      out += "[b]"+s.name+"[/b]\n";
+      out += "[color=#D9BD8C]"+DIVISIONS[s.div].levels[s.levelIndex]+" — Badge #"+s.badge+"[/color]\n";
+      out += DIVISIONS[s.div].name+" ("+s.div+")\n";
+      out += "[color=#545E68]ProTech Security Solutions — Los Santos[/color]\n";
+    }
+    return out;
+  }
+
+  async function saveAsImage(){
+    const btn = el('saveImgBtn');
+    const original = btn.textContent;
+    if(typeof html2canvas === 'undefined'){
+      btn.textContent = "Unavailable offline";
+      setTimeout(()=>{ btn.textContent = original; }, 1800);
+      return;
+    }
+    btn.textContent = "Rendering…";
+    btn.disabled = true;
+    try{
+      const target = document.querySelector('.letterhead');
+      const canvas = await html2canvas(target, { backgroundColor: null, scale: 2, useCORS: true });
+      const raw = el('subject').value.trim() || "protech-message";
+      const slug = raw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || "protech-message";
+      const link = document.createElement('a');
+      link.download = slug + ".png";
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      btn.textContent = "Saved";
+      btn.classList.add('copied');
+    }catch(e){
+      btn.textContent = "Failed — retry";
+    }
+    setTimeout(()=>{ btn.textContent = original; btn.classList.remove('copied'); btn.disabled = false; }, 1600);
+  }
+
+  // ---------- events ----------
+  function wireEvents(){
+    ['subject','body'].forEach(id=>{
+      el(id).addEventListener('input', updatePreview);
+    });
+    el('sender').addEventListener('change', ()=>{ updateSenderPreview(); updatePreview(); });
+
+    document.querySelectorAll('.class-chip').forEach(chip=>{
+      chip.addEventListener('click', ()=>{
+        document.querySelectorAll('.class-chip').forEach(c=>c.classList.remove('active'));
+        chip.classList.add('active');
+        classification = chip.dataset.c;
+        updatePreview();
+      });
+    });
+    document.querySelector('.class-chip[data-c="ROUTINE"]').classList.add('active');
+
+    el('newDivision').addEventListener('change', ()=>{
+      populateLevelSelect(el('newLevel'), el('newDivision').value);
+    });
+
+    el('addStaffBtn').addEventListener('click', ()=>{
+      const name = el('newName').value.trim();
+      const badge = el('newBadge').value.trim();
+      const div = el('newDivision').value;
+      const levelIndex = parseInt(el('newLevel').value, 10);
+      if(!name || !badge){ return; }
+      roster.push({ id: 'r'+Date.now(), name, div, levelIndex, badge });
+      saveRoster();
+      renderRosterList(); renderSenderSelect(); updatePreview();
+      el('newName').value = ""; el('newBadge').value = "";
+    });
+
+    document.querySelectorAll('.bb-swatch').forEach(sw=>{
+      sw.addEventListener('click', ()=> wrapColor(sw.dataset.color));
+    });
+    el('customColor').addEventListener('change', ()=> wrapColor(el('customColor').value));
+    el('applySizeBtn').addEventListener('click', ()=> wrapSize(el('sizeSelect').value));
+
+    document.querySelectorAll('.bb-btn[data-bb]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const key = btn.dataset.bb;
+        if(key === 'hr'){ insertBBHr(); }
+        else if(key === 'list'){ insertBBList(false); }
+        else if(key === 'list1'){ insertBBList(true); }
+        else if(key === 'table'){ insertBBTable(); }
+        else if(key === 'img'){ insertBBImage(); }
+        else{ wrapBBTag(key); }
+      });
+    });
+
+    async function copyText(text, btn){
+      try{
+        await navigator.clipboard.writeText(text);
+      }catch(e){
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+      }
+      const original = btn.textContent;
+      btn.textContent = "Copied";
+      btn.classList.add('copied');
+      setTimeout(()=>{ btn.textContent = original; btn.classList.remove('copied'); }, 1400);
+    }
+
+    el('copyBBBtn').addEventListener('click', ()=> copyText(buildBBCode(), el('copyBBBtn')));
+    el('copyBtn').addEventListener('click', ()=> copyText(buildPlainText(), el('copyBtn')));
+    el('saveImgBtn').addEventListener('click', saveAsImage);
+  }
+
+  function tickClock(){
+    const d = new Date();
+    el('sysclock').innerHTML =
+      '<b>' + todayString() + '</b><br>SESSION ACTIVE';
+  }
+
+  async function init(){
+    populateDivisionSelect(el('newDivision'));
+    populateLevelSelect(el('newLevel'), el('newDivision').value);
+
+    await loadRoster();
+    renderSenderSelect();
+    renderRosterList();
+    wireEvents();
+    updatePreview();
+    tickClock();
+  }
+
+  init();
+
+})();
+</script>
+
+</body>
+</html>
