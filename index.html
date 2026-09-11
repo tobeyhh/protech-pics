@@ -273,7 +273,7 @@
     <div class="brand-mark">P</div>
     <div class="brand-text">
       <h1>ProTech Security Solutions</h1>
-      <p>Internal Correspondence Systems</p>
+      <p>Internal Correspondence System</p>
     </div>
   </div>
   <div class="sysclock" id="sysclock"></div>
@@ -400,13 +400,15 @@
     EXE: { name: "Executive Division", levels: ["Assistant Director","Director of Operations","Chief Operating Officer","Chief Executive Officer"] },
     TSD: { name: "Technical Services Division", levels: ["Junior Technician","Technician","Senior Technician","Supervisor Technician","Assistant Director","Technical Services Director"] },
     PPD: { name: "Personal Protection Division", levels: ["Protection Officer I","Protection Officer II","Senior Protection Officer","Lead Protection Officer","Division Supervisor","Personal Protection Director"] },
-    RTD: { name: "Training & Recruitment Division", levels: ["Field Training Officer","Recruitment Officer"," Assistant Training & Recruitment Director","Training & Recruitment Director"] },
-    OPS: { name: "Field Operations", levels: ["Security Officer","Senior Security Officer","Shift Supervisor","Operations Coordinator","Director of Field Operations"] }
+    TNR: { name: "Training & Recruitment Division", levels: ["Field Training Officer","Recruitment Officer"," Assistant Training & Recruitment Director","Training & Recruitment Director"] },
+    POD: { name: "Field Operations", levels: ["Security Officer","Senior Security Officer","Shift Supervisor","Operations Coordinator","Director of Field Operations"] }
   };
 
   const DEFAULT_ROSTER = [
     { id: "r1", name: "Mara Locke", div: "TSD", levelIndex: 5, badge: "598" },
-    { id: "r2", name: "Dominic Gallagher", div: "OPS", levelIndex: 0, badge: "103" }
+    { id: "r2", name: "Vanessa Kovacs", div: "TNR", levelIndex: 2, badge: "420" },
+    { id: "r3", name: "Adrian Cooper", div: "POD", levelIndex: 3, badge: "111" },
+    { id: "r4", name: "Dominic Gallagher", div: "POD", levelIndex: 0, badge: "103" }
   ];
 
   let roster = [];
