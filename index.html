@@ -190,25 +190,6 @@
     background:linear-gradient(180deg, var(--panel-raised), var(--panel));
     padding:26px 26px 22px;
   }
-  .corner{ position:absolute; width:10px; height:10px; border:1px solid var(--gold); opacity:0.6; }
-  .corner.tl{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
-  .corner.tr{ top:-1px; right:-1px; border-left:none; border-bottom:none; }
-  .corner.bl{ bottom:-1px; left:-1px; border-right:none; border-top:none; }
-  .corner.br{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
-
-  .lh-head{
-    display:flex; justify-content:space-between; align-items:flex-start;
-    padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid var(--border);
-  }
-  .lh-brand{ font-family:'Space Grotesk'; font-weight:600; font-size:14px; letter-spacing:0.01em; }
-  .lh-brand span{ display:block; font-family:'IBM Plex Mono'; font-weight:400; font-size:10.5px; color:var(--faint); margin-top:3px; letter-spacing:0.08em; }
-  .stamp{
-    font-family:'IBM Plex Mono'; font-size:10.5px; letter-spacing:0.1em; padding:5px 10px;
-    border:1px solid var(--muted); color:var(--muted);
-  }
-  .stamp.ROUTINE{ border-color:var(--steel); color:var(--steel); }
-  .stamp.CONFIDENTIAL{ border-color:var(--gold); color:var(--gold-soft); }
-  .stamp.URGENT{ border-color:var(--danger); color:#D97F6C; }
 
   .meta{ font-family:'IBM Plex Mono'; font-size:12px; line-height:2; margin-bottom:16px; }
   .meta-row{ display:flex; gap:10px; }
@@ -219,6 +200,7 @@
   .lh-subject{
     font-family:'Space Grotesk'; font-size:15.5px; font-weight:500; margin:0 0 16px;
     padding-bottom:14px; border-bottom:1px solid var(--border);
+    text-align:center;
   }
   .lh-body{
     font-size:14px; line-height:1.7; white-space:pre-wrap; min-height:120px; color:#D7DAE0;
@@ -369,13 +351,6 @@
     <p class="pane-title">PREVIEW</p>
 
     <div class="letterhead">
-      <span class="corner tl"></span><span class="corner tr"></span>
-      <span class="corner bl"></span><span class="corner br"></span>
-
-      <div class="lh-head">
-        <div class="lh-brand">PROTECH SECURITY SOLUTIONS<span>INTERNAL CORRESPONDENCE — LOS SANTOS</span></div>
-        <div class="stamp ROUTINE" id="stampEl">ROUTINE</div>
-      </div>
 
       <p class="lh-subject" id="mSubject">Subject line appears here</p>
       <div class="lh-body empty" id="mBody">Message body will appear here as you type.</div>
@@ -658,9 +633,6 @@
     const bodyEl = el('mBody');
     bodyEl.innerHTML = body ? bbcodeToHtml(body) : "Message body will appear here as you type.";
     bodyEl.classList.toggle('empty', !body);
-
-    el('stampEl').textContent = classification;
-    el('stampEl').className = 'stamp ' + classification;
 
     const sig = el('mSig');
     if(s){
